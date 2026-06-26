@@ -1,0 +1,8 @@
+{
+  "values": [
+    "create_backtanks_expanded:speed_upgrade",
+    "create_backtanks_expanded:hover_upgrade",
+    "create_backtanks_expanded:elytra_upgrade",
+    "create_backtanks_expanded:pressurized_air_regeneration_upgrade"
+  ]
+}

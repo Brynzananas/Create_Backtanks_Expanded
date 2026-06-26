@@ -1,0 +1,19 @@
+{
+  "create_backtanks_expanded.tooltip.upgrades.start": "Equipped Upgrades:",
+  "create_backtanks_expanded.creativetab": "Create: Backtanks Expanded",
+  "block.create_backtanks_expanded.backtank_upgrade_station": "Backtank Upgrade Station",
+  "item.create_backtanks_expanded.speed_upgrade": "Speed Upgrade",
+  "item.create_backtanks_expanded.speed_upgrade.tooltip": "+#value#% Move Speed",
+  "item.create_backtanks_expanded.hover_upgrade": "Hover Upgrade",
+  "item.create_backtanks_expanded.hover_upgrade.tooltip": "+#value# Hover Distance",
+  "item.create_backtanks_expanded.hover_upgrade.tooltip.item": "+#value# Hover Distance. (Max: #max_value#)",
+  "item.create_backtanks_expanded.pressurized_air_regeneration_upgrade": "Pressurized Air Regeneration Upgrade",
+  "item.create_backtanks_expanded.pressurized_air_regeneration_upgrade.tooltip": "#value# Pressurized Air per Second",
+  "item.create_backtanks_expanded.elytra_upgrade": "Elytra Upgrade",
+  "item.create_backtanks_expanded.elytra_upgrade.tooltip": "+Elytra Flight",
+  "item.create_backtanks_expanded.elytra_upgrade.tooltip.item": "+Elytra Flight. Doesn't Stack",
+  "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.1": "When Redstone Powered With Non-upgraded Backtank On Top:",
+  "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.2": " Equips backtank with upgrades from nearby connected depots.",
+  "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.3": "When Redstone Powered With Upgraded Backtank On Top:",
+  "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.4": " Strips backtank upgrades onto nearby connected depots."
+}

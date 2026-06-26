@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "create_backtanks_expanded:block/backtank_upgrade_station"
+    }
+  }
+}

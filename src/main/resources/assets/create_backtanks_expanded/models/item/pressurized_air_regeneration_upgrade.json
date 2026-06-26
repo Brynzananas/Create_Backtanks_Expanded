@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "create_backtanks_expanded:item/andesite_pressurized_air_regeneration_upgrade_template"
+  }
+}

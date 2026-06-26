@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "create_backtanks_expanded:block/backtank_upgrade_station_bottom",
+    "east": "create_backtanks_expanded:block/backtank_upgrade_station_side",
+    "north": "create_backtanks_expanded:block/backtank_upgrade_station_side",
+    "particle": "create_backtanks_expanded:block/backtank_upgrade_station_side",
+    "south": "create_backtanks_expanded:block/backtank_upgrade_station_side",
+    "up": "create_backtanks_expanded:block/backtank_upgrade_station_top",
+    "west": "create_backtanks_expanded:block/backtank_upgrade_station_side"
+  }
+}

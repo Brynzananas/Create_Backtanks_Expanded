@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.brynzananas.create_backtanks_expanded.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "BacktankBlockMixin",
+    "BacktankBlockEntityMixin",
+    "EntityMixin",
+    "LivingEntityMixin",
+    "ElytraMixin",
+    "PlayerMixin"
+  ],
+  "client": [],
+  "server": []
+}
