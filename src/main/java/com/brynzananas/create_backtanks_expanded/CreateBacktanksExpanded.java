@@ -1,12 +1,14 @@
 package com.brynzananas.create_backtanks_expanded;
 
+import com.brynzananas.create_backtanks_expanded.upgrades.FluidTankUpgradeItem;
 import com.brynzananas.create_backtanks_expanded.upgrades.HoverUpgradeItem;
 import com.brynzananas.create_backtanks_expanded.upgrades.PressurizedAirRegenerationUpgradeItem;
 import com.brynzananas.create_backtanks_expanded.upgrades.SpeedUpgradeItem;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import com.simibubi.create.AllBlockEntityTypes;
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.equipment.armor.BacktankBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
@@ -23,25 +25,32 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.SimpleFluidContent;
+import net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.registries.*;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Mod(CreateBacktanksExpanded.MODID)
@@ -55,7 +64,14 @@ public class CreateBacktanksExpanded {
     public static final DeferredItem<HoverUpgradeItem> HOVER_UPGRADE = ITEMS.registerItem("hover_upgrade", HoverUpgradeItem::new);
     public static final DeferredItem<PressurizedAirRegenerationUpgradeItem> AIR_REGENERATION_UPGRADE = ITEMS.registerItem("pressurized_air_regeneration_upgrade", PressurizedAirRegenerationUpgradeItem::new);
     public static final DeferredItem<BacktankUpgradeItem> ELYTRA_UPGRADE = ITEMS.registerItem("elytra_upgrade", BacktankUpgradeItem::new);
-    public static final DeferredBlock<BacktankUpgradeStationBlock> BACKTANK_UPGRADE_STATION = BLOCKS.registerBlock("backtank_upgrade_station", BacktankUpgradeStationBlock::new);
+    public static final int FLUID_TANK_UPGRADE_CAPACITY = 1000;
+    public static final DeferredItem<FluidTankUpgradeItem> FLUID_TANK_UPGRADE = ITEMS.registerItem("fluid_tank_upgrade", new Function<Item.Properties, FluidTankUpgradeItem>() {
+        @Override
+        public FluidTankUpgradeItem apply(Item.Properties properties) {
+            return new FluidTankUpgradeItem(properties, FLUID_TANK_UPGRADE_CAPACITY);
+        }
+    });
+    public static final DeferredBlock<BacktankUpgradeStationBlock> BACKTANK_UPGRADE_STATION = BLOCKS.register("backtank_upgrade_station", () -> new BacktankUpgradeStationBlock(AllBlocks.DEPOT.get().properties()));
     public static final DeferredItem<BlockItem> BACKTANK_UPGRADE_STATION_ITEM = ITEMS.registerSimpleBlockItem(BACKTANK_UPGRADE_STATION);
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, MODID);
@@ -117,11 +133,21 @@ public class CreateBacktanksExpanded {
                     .persistent(ItemContainerContents.CODEC)
                     .networkSynchronized(ItemContainerContents.STREAM_CODEC)
                     .build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<SimpleFluidContent>> BACKTANK_FLUID_TANK_2 =
+            DATA_COMPONENT_TYPES.register("fluid_tank_2", () -> DataComponentType.<SimpleFluidContent>builder()
+                    .persistent(SimpleFluidContent.CODEC)
+                    .networkSynchronized(SimpleFluidContent.STREAM_CODEC)
+                    .build());
     public static final int MAX_UPGRADE_SLOTS = 1024;
     public static final Supplier<AttachmentType<NonNullList<ItemStack>>> BACKTANK_UPGRADES =
             ATTACHMENT_TYPES.register("upgrades", () -> AttachmentType.builder(
                     () -> NonNullList.withSize(MAX_UPGRADE_SLOTS, ItemStack.EMPTY)
             ).serialize(ITEM_LIST_CODEC).build());
+    public static final int MAX_FLUID_CAPACITY = 1000;
+    public static final Supplier<AttachmentType<SerializableFluidTank>> BACKTANK_FLUID_TANK =
+            ATTACHMENT_TYPES.register("fluid_tank", () -> AttachmentType.serializable(() ->
+                    new SerializableFluidTank(MAX_FLUID_CAPACITY)
+            ).build());
     public static boolean isSableInstalled;
 
     public CreateBacktanksExpanded(IEventBus modEventBus, ModContainer modContainer) {
@@ -137,8 +163,72 @@ public class CreateBacktanksExpanded {
         NeoForge.EVENT_BUS.addListener(this::onBlockPlaced);
         NeoForge.EVENT_BUS.addListener(this::onEquipmentChange);
         NeoForge.EVENT_BUS.addListener(this::onItemTooltip);
+        modEventBus.addListener(this::registerCapabilities);
 
         modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+    }
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerItem(
+                Capabilities.FluidHandler.ITEM,
+                (itemStack, context) -> {
+                    // Cast the item safely to extract its custom capacity property
+                    int capacity = ((FluidTankUpgradeItem) itemStack.getItem()).capacity;
+                    return new FluidHandlerItemStack(new Supplier<DataComponentType<SimpleFluidContent>>() {
+                        @Override
+                        public DataComponentType<SimpleFluidContent> get() {
+                            return new DataComponentType<SimpleFluidContent>() {
+                                @Override
+                                public @Nullable Codec<SimpleFluidContent> codec() {
+                                    return SimpleFluidContent.CODEC;
+                                }
+
+                                @Override
+                                public StreamCodec<? super RegistryFriendlyByteBuf, SimpleFluidContent> streamCodec() {
+                                    return SimpleFluidContent.STREAM_CODEC;
+                                }
+                            };
+                        }
+                    }, itemStack, capacity);
+                },
+                FLUID_TANK_UPGRADE.get()
+        );
+        // Register the capability for your custom Block Entity Type
+        event.registerBlockEntity(
+                Capabilities.FluidHandler.BLOCK,
+                AllBlockEntityTypes.BACKTANK.get(),
+                (blockEntity, direction) -> {
+                    SerializableFluidTank tank = blockEntity.getData(BACKTANK_FLUID_TANK);
+
+                    // Intercept the onContentsChanged to ensure changes save to the chunk
+                    return new SerializableFluidTank(tank.getCapacity()) {
+                        @Override
+                        public int fill(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
+                            int filled = tank.fill(resource, action);
+                            if (filled > 0 && action.execute()) {
+                                blockEntity.setChanged(); // Marks chunk dirty for serialization
+                            }
+                            return filled;
+                        }
+
+                        @Override
+                        public net.neoforged.neoforge.fluids.FluidStack drain(int maxDrain, FluidAction action) {
+                            net.neoforged.neoforge.fluids.FluidStack drained = tank.drain(maxDrain, action);
+                            if (!drained.isEmpty() && action.execute()) {
+                                blockEntity.setChanged();
+                            }
+                            return drained;
+                        }
+
+                        // Proxy all other necessary FluidTank methods directly to the attachment instance
+                        @Override
+                        public net.neoforged.neoforge.fluids.FluidStack getFluid() { return tank.getFluid(); }
+                        @Override
+                        public int getFluidAmount() { return tank.getFluidAmount(); }
+                        @Override
+                        public int getSpace() { return tank.getSpace(); }
+                    };
+                }
+        );
     }
     private void onItemTooltip(ItemTooltipEvent event) {
         if (event.getItemStack().getItem().equals(BACKTANK_UPGRADE_STATION_ITEM.get())){
@@ -202,6 +292,11 @@ public class CreateBacktanksExpanded {
         if (!(be instanceof BacktankBlockEntity)) return;
         if (event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
             ItemStack itemInHand = player.getItemInHand(player.getUsedItemHand());
+            SimpleFluidContent simpleFluidContent = itemInHand.get(BACKTANK_FLUID_TANK_2);
+            if (simpleFluidContent != null){
+                SerializableFluidTank tank = be.getData(CreateBacktanksExpanded.BACKTANK_FLUID_TANK);
+                tank.setFluid(simpleFluidContent.copy());
+            }
             NonNullList<ItemStack> itemData = NonNullList.withSize(MAX_UPGRADE_SLOTS, ItemStack.EMPTY);
             NonNullList<ItemStack> itemStacks = Utils.GetUpgrades(itemInHand);
             for (int i = 0; i < itemData.size() && i < itemStacks.size(); i++){

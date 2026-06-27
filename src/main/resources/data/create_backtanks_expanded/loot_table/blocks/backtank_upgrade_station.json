@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "create_backtanks_expanded:backtank_upgrade_station"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "create_backtanks_expanded:blocks/backtank_upgrade_station"
+}

@@ -1,6 +1,7 @@
 package com.brynzananas.create_backtanks_expanded.mixin;
 
 import com.brynzananas.create_backtanks_expanded.CreateBacktanksExpanded;
+import com.brynzananas.create_backtanks_expanded.SerializableFluidTank;
 import com.brynzananas.create_backtanks_expanded.Utils;
 import com.simibubi.create.content.equipment.armor.BacktankBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
@@ -16,6 +17,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidActionResult;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -52,5 +57,20 @@ public class BacktankBlockEntityMixin extends KineticBlockEntity {
     private void onCollectImplicitComponents(DataComponentMap.Builder components, CallbackInfo info) {
         BacktankBlockEntity backtankBlockEntity = (BacktankBlockEntity) (Object) this;
         components.set(CreateBacktanksExpanded.BACKTANK_UPGRADES_2, ItemContainerContents.fromItems(Utils.GetUpgrades(backtankBlockEntity)));
+    }
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void onTick(CallbackInfo info){
+        BacktankBlockEntity backtankBlockEntity = (BacktankBlockEntity) (Object) this;
+        SerializableFluidTank tank = backtankBlockEntity.getData(CreateBacktanksExpanded.BACKTANK_FLUID_TANK);
+        if (tank.isEmpty()) return;
+        NonNullList<ItemStack> itemStacks = Utils.GetUpgrades(backtankBlockEntity);
+        boolean changed = false;
+        for (ItemStack itemStack : itemStacks){
+            FluidActionResult fluidActionResult = FluidUtil.tryFillContainer(itemStack, tank, tank.getFluidAmount(), null, true);
+            if (!fluidActionResult.success) continue;
+            changed = true;
+            if (tank.isEmpty()) break;
+        }
+        if (changed) backtankBlockEntity.setChanged();
     }
 }

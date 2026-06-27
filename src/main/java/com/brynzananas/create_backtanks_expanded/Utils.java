@@ -15,6 +15,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
@@ -25,6 +26,9 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.util.thread.EffectiveSide;
 import net.neoforged.neoforge.common.util.LogicalSidedProvider;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -54,8 +58,30 @@ public class Utils {
                 ItemContainerContents.EMPTY);
         return NonNullList.copyOf(currentContents.stream().toList());
     }
+    public static ItemStack GetFirstMatchingUpgrade(ItemStack itemStack, Item item){
+        NonNullList<ItemStack> itemStacks = GetUpgrades(itemStack);
+        ItemStack itemStack2 = ItemStack.EMPTY;
+        for (ItemStack itemStack1 : itemStacks) {
+            if (itemStack1.getItem().equals(item)) {
+                itemStack2 = itemStack1;
+                return itemStack2;
+            }
+        }
+        return itemStack2;
+    }
     public static NonNullList<ItemStack> GetUpgrades(BlockEntity blockEntity){
         return blockEntity.getData(CreateBacktanksExpanded.BACKTANK_UPGRADES);
+    }
+    public static ItemStack GetFirstMatchingUpgrade(BlockEntity blockEntity, Item item){
+        NonNullList<ItemStack> itemStacks = GetUpgrades(blockEntity);
+        ItemStack itemStack2 = ItemStack.EMPTY;
+        for (ItemStack itemStack1 : itemStacks) {
+            if (itemStack1.getItem().equals(item)) {
+                itemStack2 = itemStack1;
+                return itemStack2;
+            }
+        }
+        return itemStack2;
     }
     public static int FindInsertionIndex(List<Component> tooltip) {
         boolean found = false;
