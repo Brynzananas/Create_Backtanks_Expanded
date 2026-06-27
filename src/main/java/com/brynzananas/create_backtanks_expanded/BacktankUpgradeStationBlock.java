@@ -1,6 +1,7 @@
 package com.brynzananas.create_backtanks_expanded;
 
 import com.simibubi.create.content.equipment.armor.BacktankBlockEntity;
+import com.simibubi.create.content.fluids.pipes.IAxisPipe;
 import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,7 +23,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.*;
 
-public class BacktankUpgradeStationBlock extends Block {
+public class BacktankUpgradeStationBlock extends Block implements IAxisPipe {
     public BacktankUpgradeStationBlock(Properties properties) {
         super(properties);
     }
@@ -42,6 +43,7 @@ public class BacktankUpgradeStationBlock extends Block {
     }
     public void checkAndFlip(BlockState state, ServerLevel level, BlockPos pos) {
         boolean flag = level.hasNeighborSignal(pos);
+
         if (flag != state.getValue(POWERED)) {
             BlockState blockstate = state;
             if (!(Boolean)state.getValue(POWERED)) {
@@ -153,5 +155,10 @@ public class BacktankUpgradeStationBlock extends Block {
             level.sendBlockUpdated(depotBlockEntity.getBlockPos(), depotBlockEntity.getBlockState(), depotBlockEntity.getBlockState(), 3);
             level.playSound(null, backtankBlockEntity.getBlockPos(), SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.PLAYERS, .75f, 1);
         }
+    }
+
+    @Override
+    public Direction.Axis getAxis(BlockState blockState) {
+        return Direction.Axis.Y;
     }
 }

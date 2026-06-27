@@ -32,6 +32,14 @@ public class BacktankUpgradeItem extends Item {
             component = Component.translatable(descriptionId);
         }
         literalText = ModifyTooltipString(component.getString(), 1);
+        int airRegeneration = ModifyAirRegeneration(1);
+        if (airRegeneration != 0 && !stack.getItem().equals(CreateBacktanksExpanded.AIR_REGENERATION_UPGRADE.get())){
+            String descriptionId2 = "item.create_backtanks_expanded.pressurized_air_regeneration_upgrade.tooltip";
+            Component component2 = Component.translatable(descriptionId2);
+            boolean positive = airRegeneration > 0;
+            String literalText2 = component2.getString().replaceAll("#value#", (positive ? "+" : "-") + Math.abs(airRegeneration));
+            literalText += ". " + literalText2;
+        }
         component = Component.literal(literalText).withStyle(ChatFormatting.GOLD);
         tooltipComponents.add(component);
     }

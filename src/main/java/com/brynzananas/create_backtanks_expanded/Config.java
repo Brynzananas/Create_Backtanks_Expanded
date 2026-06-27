@@ -22,11 +22,11 @@ public class Config {
 
         SPEED_UPGRADE_SPEED_MULTIPLIER = BUILDER
                 .comment("Speed Multiplier")
-                .defineInRange("speed_upgrade_speed_multiplier", 0.2, -Double.MAX_VALUE, Double.MAX_VALUE);
+                .defineInRange("speed_upgrade_speed_multiplier", 0.05, -Double.MAX_VALUE, Double.MAX_VALUE);
 
         SPEED_UPGRADE_PRESSURIZED_AIR_REGENERATION = BUILDER
                 .comment("Pressurized Air Regeneration per Second")
-                .defineInRange("speed_upgrade_pressurized_air_regeneration", -1, -Integer.MAX_VALUE, Integer.MAX_VALUE);
+                .defineInRange("speed_upgrade_pressurized_air_regeneration", 0, -Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         BUILDER.pop();
 
@@ -42,7 +42,7 @@ public class Config {
 
         HOVER_UPGRADE_PRESSURIZED_AIR_REGENERATION = BUILDER
                 .comment("Pressurized Air Regeneration per Second")
-                .defineInRange("hover_upgrade_pressurized_air_regeneration", -1, -Integer.MAX_VALUE, Integer.MAX_VALUE);
+                .defineInRange("hover_upgrade_pressurized_air_regeneration", 0, -Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         BUILDER.pop();
 

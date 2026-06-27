@@ -5,6 +5,8 @@ import com.brynzananas.create_backtanks_expanded.upgrades.PressurizedAirRegenera
 import com.brynzananas.create_backtanks_expanded.upgrades.SpeedUpgradeItem;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import com.simibubi.create.content.equipment.armor.BacktankBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
@@ -32,6 +34,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.registries.*;
 import org.slf4j.Logger;
 
@@ -66,9 +69,9 @@ public class CreateBacktanksExpanded {
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(GENERIC_UPGRADE.get())).title(Component.translatable("create_backtanks_expanded.creativetab")
                     ).displayItems((itemDisplayParameters, output) -> {
                 output.accept(BACKTANK_UPGRADE_STATION);
-                output.accept(AIR_REGENERATION_UPGRADE);
                 output.accept(HOVER_UPGRADE);
                 output.accept(ELYTRA_UPGRADE);
+                output.accept(SPEED_UPGRADE);
             }).build());
     public static final DeferredHolder<Attribute, Attribute> BACKTANK_PRESSURIZED_AIR_REGENERATION = ATTRIBUTES.register(
             "backtank_pressurized_air_regeneration",
@@ -195,6 +198,8 @@ public class CreateBacktanksExpanded {
     }
     private void onBlockPlaced(EntityPlaceEvent event) {
         if (event.getLevel().isClientSide()) return;
+        BlockEntity be = event.getLevel().getBlockEntity(event.getPos());
+        if (!(be instanceof BacktankBlockEntity)) return;
         if (event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
             ItemStack itemInHand = player.getItemInHand(player.getUsedItemHand());
             NonNullList<ItemStack> itemData = NonNullList.withSize(MAX_UPGRADE_SLOTS, ItemStack.EMPTY);
@@ -202,12 +207,8 @@ public class CreateBacktanksExpanded {
             for (int i = 0; i < itemData.size() && i < itemStacks.size(); i++){
                 itemData.set(i, itemStacks.get(i));
             }
-                BlockEntity be = event.getLevel().getBlockEntity(event.getPos());
-                if (be != null) {
-                    be.setData(BACKTANK_UPGRADES, itemData);
-                    be.setChanged();
-                }
-
+            be.setData(BACKTANK_UPGRADES, itemData);
+            be.setChanged();
         }
     }
 
