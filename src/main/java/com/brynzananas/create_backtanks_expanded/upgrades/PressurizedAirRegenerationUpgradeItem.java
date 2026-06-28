@@ -32,10 +32,10 @@ public class PressurizedAirRegenerationUpgradeItem extends BacktankUpgradeItem {
         Utils.RemoveAirRegenerationAttribute(livingEntity, PRESSURIZED_AIR_REGEN);
     }
     @Override
-    public String ModifyTooltipString(String string, int count){
+    public String ModifyTooltipString(String string, int count, ItemStack itemStack){
         return string.replaceAll("#value#", "+" + (Config.PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count));
     }
-    public int ModifyAirRegeneration(int count){
+    public int ModifyAirRegeneration(int count, ItemStack itemStack){
         return Config.PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count;
     }
 }

@@ -2,6 +2,11 @@
   "create_backtanks_expanded.tooltip.upgrades.start": "Equipped Upgrades:",
   "create_backtanks_expanded.creativetab": "Create: Backtanks Expanded",
   "block.create_backtanks_expanded.backtank_upgrade_station": "Backtank Upgrade Station",
+  "block.create_backtanks_expanded.backtank_upgrade_station.tooltip.summary": "Upgrade station.",
+  "block.create_backtanks_expanded.backtank_upgrade_station.tooltip.condition1": "When Redstone Powered With Non-upgraded Backtank On Top:",
+  "block.create_backtanks_expanded.backtank_upgrade_station.tooltip.behaviour1": "_Equips backtank_ with _upgrades_ from _nearby connected depots_.",
+  "block.create_backtanks_expanded.backtank_upgrade_station.tooltip.condition2": "When Redstone Powered With Upgraded Backtank On Top:",
+  "block.create_backtanks_expanded.backtank_upgrade_station.tooltip.behaviour2": "_Strips backtank upgrades_ onto _nearby connected depots_.",
   "item.create_backtanks_expanded.speed_upgrade": "Speed Upgrade",
   "item.create_backtanks_expanded.speed_upgrade.tooltip": "+#value#% Move Speed",
   "item.create_backtanks_expanded.hover_upgrade": "Hover Upgrade",
@@ -15,5 +20,11 @@
   "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.1": "When Redstone Powered With Non-upgraded Backtank On Top:",
   "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.2": " Equips backtank with upgrades from nearby connected depots.",
   "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.3": "When Redstone Powered With Upgraded Backtank On Top:",
-  "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.4": " Strips backtank upgrades onto nearby connected depots."
+  "item.create_backtanks_expanded.backtank_upgrade_station.tooltip.4": " Strips backtank upgrades onto nearby connected depots.",
+  "item.create_backtanks_expanded.fluid_tank_upgrade": "Fluid Tank Upgrade",
+  "item.create_backtanks_expanded.auto_drink_upgrade": "Auto Drink Upgrade",
+  "item.create_backtanks_expanded.fluid_tank_upgrade.tooltip": "+#fluid_name#: #value#mB/#max_value#mB",
+  "item.create_backtanks_expanded.fluid_tank_upgrade.tooltip.empty": "Empty",
+  "item.create_backtanks_expanded.auto_drink_upgrade.tooltip": "+Auto Drink",
+  "item.create_backtanks_expanded.auto_drink_upgrade.tooltip.item": "Automatically consumes potion fluids from Fluid Tank Upgrades on the equipped Backtank to apply their effect on the owner. Consumes #value#mB on apply. Doesn't stack"
 }

@@ -15,6 +15,10 @@ public class Config {
 
     public static final ModConfigSpec.IntValue PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION;
 
+    public static final ModConfigSpec.IntValue FLUID_TANK_UPGRADE_MAX_CAPACITY;
+
+    public static final ModConfigSpec.IntValue AUTO_DRINK_UPGRADE_POTION_CONSUME_AMOUNT;
+
     static {
         BUILDER.comment("Main configuration").push("create_backtanks_expanded_config");
 
@@ -51,6 +55,22 @@ public class Config {
         PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION = BUILDER
                 .comment("Pressurized Air Regeneration per Second")
                 .defineInRange("pressurized_air_regeneration_upgrade_pressurized_air_regeneration", 2, -Integer.MAX_VALUE, Integer.MAX_VALUE);
+
+        BUILDER.pop();
+
+        BUILDER.comment("Fluid Tank Upgrade").push("fluid_tank_upgrade_config");
+
+        FLUID_TANK_UPGRADE_MAX_CAPACITY = BUILDER
+                .comment("Maximum Fluid Capacity. Restart Required")
+                .defineInRange("fluid_tank_upgrade_max_capacity", 1000, 0, Integer.MAX_VALUE);
+
+        BUILDER.pop();
+
+        BUILDER.comment("Auto Drink Upgrade").push("auto_drink_upgrade_config");
+
+        AUTO_DRINK_UPGRADE_POTION_CONSUME_AMOUNT = BUILDER
+                .comment("Potion Fluid Consume Amount in mB")
+                .defineInRange("auto_drink_upgrade_potion_consume_amount", 250, 0, Integer.MAX_VALUE);
 
         BUILDER.pop();
 

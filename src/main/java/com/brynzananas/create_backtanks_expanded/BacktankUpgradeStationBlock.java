@@ -3,23 +3,24 @@ package com.brynzananas.create_backtanks_expanded;
 import com.simibubi.create.content.equipment.armor.BacktankBlockEntity;
 import com.simibubi.create.content.fluids.pipes.IAxisPipe;
 import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
+import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.CopperBulbBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
@@ -134,11 +135,6 @@ public class BacktankUpgradeStationBlock extends Block implements IAxisPipe {
                 itemStacks.set(i, depotBlockEntity.getHeldItem().copyWithCount(itemsToTake));
                 set = true;
                 break;
-            }else if (itemStack.getItem().equals(depotBlockEntity.getHeldItem().getItem())){
-                itemsToTake = depotBlockEntity.getHeldItem().getCount();
-                itemStacks.set(i, depotBlockEntity.getHeldItem().copyWithCount(itemsToTake + itemStack.getCount()));
-                set = true;
-                break;
             }
         }
         if (set)
@@ -160,5 +156,17 @@ public class BacktankUpgradeStationBlock extends Block implements IAxisPipe {
     @Override
     public Direction.Axis getAxis(BlockState blockState) {
         return Direction.Axis.Y;
+    }
+    public static class BacktankValueBox extends ValueBoxTransform.Sided {
+        public BacktankValueBox() {
+        }
+
+        protected Vec3 getSouthLocation() {
+            return VecHelper.voxelSpace((double)8.0F, (double)8.0F, 13.05);
+        }
+
+        protected boolean isSideActive(BlockState state, Direction direction) {
+            return direction.getAxis().isHorizontal();
+        }
     }
 }

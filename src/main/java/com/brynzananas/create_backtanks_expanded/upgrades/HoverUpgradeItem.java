@@ -63,7 +63,7 @@ public class HoverUpgradeItem extends BacktankUpgradeItem {
         }
     }
     @Override
-    public String ModifyTooltipString(String string, int count){
+    public String ModifyTooltipString(String string, int count, ItemStack itemStack){
         return string.replaceAll("#value#", String.valueOf((Math.min(Config.HOVER_UPGRADE_HOVER_REACH_RADIUS.get() * count, Config.HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS.get())))).replaceAll("#max_value#", String.valueOf(Config.HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS.get()));
     }
 }

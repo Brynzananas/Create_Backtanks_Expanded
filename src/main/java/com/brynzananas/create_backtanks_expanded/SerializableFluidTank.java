@@ -13,13 +13,11 @@ public class SerializableFluidTank extends FluidTank implements INBTSerializable
 
     @Override
     public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-        // Writes the current fluid tank data into a new CompoundTag
         return this.writeToNBT(provider, new CompoundTag());
     }
 
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        // Reads the fluid tank data back from the saved CompoundTag
         this.readFromNBT(provider, nbt);
     }
 }

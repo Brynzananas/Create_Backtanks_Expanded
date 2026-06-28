@@ -4,6 +4,9 @@ import com.brynzananas.create_backtanks_expanded.BacktankUpgradeItem;
 import com.brynzananas.create_backtanks_expanded.Config;
 import com.brynzananas.create_backtanks_expanded.CreateBacktanksExpanded;
 import com.brynzananas.create_backtanks_expanded.Utils;
+import com.simibubi.create.foundation.item.ItemDescription;
+import com.simibubi.create.foundation.item.TooltipModifier;
+import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -47,11 +50,11 @@ public class SpeedUpgradeItem extends BacktankUpgradeItem {
         }
     }
     @Override
-    public String ModifyTooltipString(String string, int count){
+    public String ModifyTooltipString(String string, int count, ItemStack itemStack){
         return string.replaceAll("#value#", String.valueOf(((int)(Config.SPEED_UPGRADE_SPEED_MULTIPLIER.get() * count * 100f))));
     }
     @Override
-    public int ModifyAirRegeneration(int count){
+    public int ModifyAirRegeneration(int count, ItemStack itemStack){
         return Config.SPEED_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count;
     }
 }

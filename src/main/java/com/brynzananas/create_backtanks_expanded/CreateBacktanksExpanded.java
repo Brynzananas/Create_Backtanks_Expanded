@@ -1,23 +1,38 @@
 package com.brynzananas.create_backtanks_expanded;
 
-import com.brynzananas.create_backtanks_expanded.upgrades.FluidTankUpgradeItem;
-import com.brynzananas.create_backtanks_expanded.upgrades.HoverUpgradeItem;
-import com.brynzananas.create_backtanks_expanded.upgrades.PressurizedAirRegenerationUpgradeItem;
-import com.brynzananas.create_backtanks_expanded.upgrades.SpeedUpgradeItem;
+import com.brynzananas.create_backtanks_expanded.upgrades.*;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
+import com.simibubi.create.AllItems;
 import com.simibubi.create.content.equipment.armor.BacktankBlockEntity;
+import com.simibubi.create.content.processing.basin.BasinBlockEntity;
+import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
+import com.simibubi.create.foundation.codec.CreateCodecs;
+import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.item.ItemDescription;
+import com.simibubi.create.foundation.item.KineticStats;
+import com.simibubi.create.foundation.item.TooltipModifier;
+import com.simibubi.create.foundation.utility.Debug;
+import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.minecraft.world.item.BlockItem;
@@ -25,30 +40,33 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.SimpleFluidContent;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.registries.*;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -57,6 +75,7 @@ import java.util.function.Supplier;
 public class CreateBacktanksExpanded {
     public static final String MODID = "create_backtanks_expanded";
     public static final Logger LOGGER = LogUtils.getLogger();
+//    private static final CreateRegistrate REGISTRATE = ((CreateRegistrate)CreateRegistrate.create(MODID).setTooltipModifierFactory((item) -> (new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)).andThen(TooltipModifier.mapNull(KineticStats.create(item)))));
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredItem<BacktankUpgradeItem> GENERIC_UPGRADE = ITEMS.registerItem("generic_upgrade", BacktankUpgradeItem::new);
@@ -71,6 +90,7 @@ public class CreateBacktanksExpanded {
             return new FluidTankUpgradeItem(properties, FLUID_TANK_UPGRADE_CAPACITY);
         }
     });
+    public static final DeferredItem<AutoDrinkUpgradeItem> AUTO_DRINK_UPGRADE = ITEMS.registerItem("auto_drink_upgrade", AutoDrinkUpgradeItem::new);
     public static final DeferredBlock<BacktankUpgradeStationBlock> BACKTANK_UPGRADE_STATION = BLOCKS.register("backtank_upgrade_station", () -> new BacktankUpgradeStationBlock(AllBlocks.DEPOT.get().properties()));
     public static final DeferredItem<BlockItem> BACKTANK_UPGRADE_STATION_ITEM = ITEMS.registerSimpleBlockItem(BACKTANK_UPGRADE_STATION);
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
@@ -88,6 +108,8 @@ public class CreateBacktanksExpanded {
                 output.accept(HOVER_UPGRADE);
                 output.accept(ELYTRA_UPGRADE);
                 output.accept(SPEED_UPGRADE);
+                output.accept(FLUID_TANK_UPGRADE);
+                output.accept(AUTO_DRINK_UPGRADE);
             }).build());
     public static final DeferredHolder<Attribute, Attribute> BACKTANK_PRESSURIZED_AIR_REGENERATION = ATTRIBUTES.register(
             "backtank_pressurized_air_regeneration",
@@ -113,6 +135,10 @@ public class CreateBacktanksExpanded {
     );
     public static final Supplier<AttachmentType<Boolean>> HOVER_NEARBY_BLOCKS = ATTACHMENT_TYPES.register(
             "hover_nearby_blocks",
+            () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).copyOnDeath().build()
+    );
+    public static final Supplier<AttachmentType<Boolean>> CAN_AUTO_DRINK = ATTACHMENT_TYPES.register(
+            "can_auto_drink",
             () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).copyOnDeath().build()
     );
     private static final Codec<NonNullList<ItemStack>> ITEM_LIST_CODEC =
@@ -148,6 +174,23 @@ public class CreateBacktanksExpanded {
             ATTACHMENT_TYPES.register("fluid_tank", () -> AttachmentType.serializable(() ->
                     new SerializableFluidTank(MAX_FLUID_CAPACITY)
             ).build());
+    public static final Supplier<DataComponentType<SimpleFluidContent>> STORED_FLUID
+            = DATA_COMPONENTS.registerComponentType("stored_fluid", builder -> builder
+            .persistent(SimpleFluidContent.CODEC)
+            .networkSynchronized(SimpleFluidContent.STREAM_CODEC)
+    );
+    public static final Supplier<AttachmentType<SerializableFilteringBehaviour>> BACKTANK_CONSUME_FILTER =
+            ATTACHMENT_TYPES.register("consume_filtering", () -> AttachmentType.serializable(() ->
+                    (SerializableFilteringBehaviour)new SerializableFilteringBehaviour(null, new BacktankUpgradeStationBlock.BacktankValueBox()).forFluids()
+            ).build());
+//    public static final DeferredHolder<DataComponentType<?>, DataComponentType<FilterData>> BACKTANK_CONSUME_FILTER_2 =
+//            DATA_COMPONENT_TYPES.register("consume_filtering_2", () -> DataComponentType.<FilterData>builder()
+//                    .persistent(FilterData.CODEC)
+//                    .networkSynchronized(FilterData.STREAM_CODEC)
+//                    .build());
+//    public static final BlockCapability<FilteringBehaviour, Void> BACKTANK_CONSUME_FILTER =
+//            BlockCapability.createVoid(ResourceLocation.fromNamespaceAndPath(MODID, "consume_filtering"), FilteringBehaviour.class);
+
     public static boolean isSableInstalled;
 
     public CreateBacktanksExpanded(IEventBus modEventBus, ModContainer modContainer) {
@@ -162,50 +205,86 @@ public class CreateBacktanksExpanded {
 
         NeoForge.EVENT_BUS.addListener(this::onBlockPlaced);
         NeoForge.EVENT_BUS.addListener(this::onEquipmentChange);
-        NeoForge.EVENT_BUS.addListener(this::onItemTooltip);
+//        NeoForge.EVENT_BUS.addListener(this::onItemTooltip);
+        NeoForge.EVENT_BUS.addListener(this::onEntityTick);
+//        NeoForge.EVENT_BUS.addListener(this::onCanEffectBeAdded);
+
         modEventBus.addListener(this::registerCapabilities);
 
         modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+    }
+
+    private void onCanEffectBeAdded(MobEffectEvent.Applicable event){
+        MobEffectInstance mobEffectInstance = event.getEffectInstance();
+        if (mobEffectInstance.getEffect().value().getCategory() != MobEffectCategory.HARMFUL) return;
+        LivingEntity livingEntity = event.getEntity();
+        ItemStack itemStack = Utils.GetBacktank(livingEntity);
+        if (itemStack.isEmpty()) return;
+        NonNullList<ItemStack> originalUpgrades = Utils.GetUpgrades(itemStack);
+        NonNullList<ItemStack> itemStacks = NonNullList.create();
+        itemStacks.addAll(originalUpgrades);
+        boolean hasAutoDrink = false;
+        boolean canCancel = false;
+        for (int i = 0; i < itemStacks.size(); i++){
+            ItemStack itemStack1 = itemStacks.get(i);
+            if (itemStack1.getItem().equals(AUTO_DRINK_UPGRADE.get())){
+                hasAutoDrink = true;
+            }
+            IFluidHandlerItem capability = itemStack1.getCapability(Capabilities.FluidHandler.ITEM);
+            if (capability == null) continue;
+            FluidStack fluidStack = capability.getFluidInTank(1).copy();
+            if (fluidStack.isEmpty() || fluidStack.getTags().noneMatch(b -> b.equals(Tags.Fluids.MILK))) continue;
+            int drainAmount = (int)((double)(mobEffectInstance.getDuration() * mobEffectInstance.getDuration()) * 0.1d);
+            capability.drain(drainAmount, IFluidHandler.FluidAction.EXECUTE);
+            canCancel = true;
+            ItemStack container = capability.getContainer().copy();
+            itemStacks.set(i, container);
+            break;
+        }
+        if (canCancel & hasAutoDrink){
+            itemStack.set(CreateBacktanksExpanded.BACKTANK_UPGRADES_2, ItemContainerContents.fromItems(itemStacks));
+            event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
+        }
+    }
+    private void onEntityTick(EntityTickEvent.Post entityTickEvent){
+        if (entityTickEvent.getEntity().level().isClientSide) return;
+        if (!(entityTickEvent.getEntity() instanceof LivingEntity livingEntity)) return;
+        ItemStack itemStack = Utils.GetBacktank(livingEntity);
+        if (itemStack.isEmpty()) return;
+        NonNullList<ItemStack> itemStacks = Utils.GetUpgrades(itemStack);
+        for (ItemStack itemStack1 : itemStacks){
+            if (!(itemStack1.getItem() instanceof BacktankUpgradeItem backtankUpgradeItem)) continue;
+            backtankUpgradeItem.OnTick(entityTickEvent, itemStack1);
+        }
     }
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerItem(
                 Capabilities.FluidHandler.ITEM,
                 (itemStack, context) -> {
-                    // Cast the item safely to extract its custom capacity property
                     int capacity = ((FluidTankUpgradeItem) itemStack.getItem()).capacity;
-                    return new FluidHandlerItemStack(new Supplier<DataComponentType<SimpleFluidContent>>() {
-                        @Override
-                        public DataComponentType<SimpleFluidContent> get() {
-                            return new DataComponentType<SimpleFluidContent>() {
-                                @Override
-                                public @Nullable Codec<SimpleFluidContent> codec() {
-                                    return SimpleFluidContent.CODEC;
-                                }
-
-                                @Override
-                                public StreamCodec<? super RegistryFriendlyByteBuf, SimpleFluidContent> streamCodec() {
-                                    return SimpleFluidContent.STREAM_CODEC;
-                                }
-                            };
-                        }
-                    }, itemStack, capacity);
+                    return new FluidHandlerItemStack(STORED_FLUID, itemStack, capacity);
                 },
                 FLUID_TANK_UPGRADE.get()
         );
-        // Register the capability for your custom Block Entity Type
+//        event.registerBlockEntity(
+//                BACKTANK_CONSUME_FILTER,
+//                AllBlockEntityTypes.BACKTANK.get(),
+//                (blockEntity, direction) -> {
+//                    return new FilteringBehaviour(blockEntity, new BacktankUpgradeStationBlock.BacktankValueBox()).forFluids();
+//                }
+//        );
         event.registerBlockEntity(
                 Capabilities.FluidHandler.BLOCK,
                 AllBlockEntityTypes.BACKTANK.get(),
                 (blockEntity, direction) -> {
                     SerializableFluidTank tank = blockEntity.getData(BACKTANK_FLUID_TANK);
 
-                    // Intercept the onContentsChanged to ensure changes save to the chunk
                     return new SerializableFluidTank(tank.getCapacity()) {
                         @Override
                         public int fill(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
                             int filled = tank.fill(resource, action);
                             if (filled > 0 && action.execute()) {
-                                blockEntity.setChanged(); // Marks chunk dirty for serialization
+                                blockEntity.setChanged();
                             }
                             return filled;
                         }
@@ -219,7 +298,6 @@ public class CreateBacktanksExpanded {
                             return drained;
                         }
 
-                        // Proxy all other necessary FluidTank methods directly to the attachment instance
                         @Override
                         public net.neoforged.neoforge.fluids.FluidStack getFluid() { return tank.getFluid(); }
                         @Override
@@ -230,66 +308,10 @@ public class CreateBacktanksExpanded {
                 }
         );
     }
-    private void onItemTooltip(ItemTooltipEvent event) {
-        if (event.getItemStack().getItem().equals(BACKTANK_UPGRADE_STATION_ITEM.get())){
-            List<Component> tooltip = event.getToolTip();
-            int targetIndex = Utils.FindInsertionIndex(tooltip, event.getFlags().isAdvanced());
-            tooltip.add(targetIndex, Component.translatable("item.create_backtanks_expanded.backtank_upgrade_station.tooltip.4").withStyle(ChatFormatting.GOLD));
-            tooltip.add(targetIndex, Component.translatable("item.create_backtanks_expanded.backtank_upgrade_station.tooltip.3").withStyle(ChatFormatting.GRAY));
-            tooltip.add(targetIndex, Component.translatable("item.create_backtanks_expanded.backtank_upgrade_station.tooltip.2").withStyle(ChatFormatting.GOLD));
-            tooltip.add(targetIndex, Component.translatable("item.create_backtanks_expanded.backtank_upgrade_station.tooltip.1").withStyle(ChatFormatting.GRAY));
-        }
-        NonNullList<ItemStack> itemStacks = Utils.GetUpgrades(event.getItemStack());
-        if (itemStacks.isEmpty()) return;
-        List<Component> tooltip = event.getToolTip();
-
-        int targetIndex = Utils.FindInsertionIndex(tooltip);
-        Map<Item, Integer> itemCounts = new HashMap<>();
-        List<Item> items = new ArrayList<>();
-        for (ItemStack itemStack : itemStacks){
-            Item item = itemStack.getItem();
-            if (itemCounts.containsKey(item)){
-                itemCounts.replace(item, itemCounts.get(item) + itemStack.getCount());
-            }else{
-                itemCounts.put(item, itemStack.getCount());
-                items.add(item);
-            }
-        }
-
-        int airRegeneration = 0;
-        for (int i = 0; i < itemCounts.size(); i++){
-            Item item = items.get(i);
-            if (!(item instanceof BacktankUpgradeItem backtankUpgradeItem)) continue;
-            int itemCount = itemCounts.get(item);
-            airRegeneration += backtankUpgradeItem.ModifyAirRegeneration(itemCount);
-            String descriptionId = item.getDescriptionId() + ".tooltip";
-            if (descriptionId.equals("item.create_backtanks_expanded.pressurized_air_regeneration_upgrade.tooltip")) continue;
-            Component component = Component.translatable(descriptionId);
-            String literalText = component.getString();
-            if (literalText.equals(descriptionId)) continue;
-            String text = backtankUpgradeItem.ModifyTooltipString(literalText, itemCount);
-            if (targetIndex >= 0 && targetIndex <= tooltip.size()){
-                tooltip.add(targetIndex, Component.literal(text).withStyle(ChatFormatting.BLUE));
-            }else{
-                tooltip.add(Component.literal(text).withStyle(ChatFormatting.BLUE));
-            }
-        }
-        if (airRegeneration != 0){
-            String descriptionId = "item.create_backtanks_expanded.pressurized_air_regeneration_upgrade.tooltip";
-            Component component = Component.translatable(descriptionId);
-            boolean positive = airRegeneration > 0;
-            String literalText = component.getString().replaceAll("#value#", (positive ? "+" : "-") + Math.abs(airRegeneration));
-            if (targetIndex >= 0 && targetIndex <= tooltip.size()){
-                tooltip.add(targetIndex, Component.literal(literalText).withStyle((positive ? ChatFormatting.BLUE : ChatFormatting.RED)));
-            }else{
-                tooltip.add(Component.literal(literalText).withStyle((positive ? ChatFormatting.BLUE : ChatFormatting.RED)));
-            }
-        }
-    }
     private void onBlockPlaced(EntityPlaceEvent event) {
         if (event.getLevel().isClientSide()) return;
         BlockEntity be = event.getLevel().getBlockEntity(event.getPos());
-        if (!(be instanceof BacktankBlockEntity)) return;
+        if (!(be instanceof BacktankBlockEntity backtankBlockEntity)) return;
         if (event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
             ItemStack itemInHand = player.getItemInHand(player.getUsedItemHand());
             SimpleFluidContent simpleFluidContent = itemInHand.get(BACKTANK_FLUID_TANK_2);
@@ -304,10 +326,20 @@ public class CreateBacktanksExpanded {
             }
             be.setData(BACKTANK_UPGRADES, itemData);
             be.setChanged();
+//            FilterData filterData = itemInHand.get(BACKTANK_CONSUME_FILTER_2);
+//            if (filterData != null){
+//                SerializableFilteringBehaviour serializableFilteringBehaviour = be.getData(BACKTANK_CONSUME_FILTER);
+//                if (serializableFilteringBehaviour == null){
+//                    serializableFilteringBehaviour = new SerializableFilteringBehaviour(backtankBlockEntity, new BacktankUpgradeStationBlock.BacktankValueBox());
+//                }
+//                filterData.applyTo(serializableFilteringBehaviour);
+//                be.setData(BACKTANK_CONSUME_FILTER, serializableFilteringBehaviour);
+//            }
         }
     }
 
     private void onEquipmentChange(LivingEquipmentChangeEvent event){
+        if (event.getEntity().level().isClientSide) return;
         if (event.getSlot() != EquipmentSlot.CHEST) return;
         NonNullList<ItemStack> itemStacks = Utils.GetUpgrades(event.getFrom());
         if (itemStacks != null){

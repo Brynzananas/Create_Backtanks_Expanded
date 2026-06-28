@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "create_backtanks_expanded:item/copper_auto_drink_upgrade_template"
+  }
+}

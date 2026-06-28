@@ -6,6 +6,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,14 +15,13 @@ public class BacktankUpgradeItem extends Item {
     public BacktankUpgradeItem(Properties properties) {
         super(properties);
     }
-    public void OnEquip(LivingEquipmentChangeEvent event){
-    }
-    public void OnUnequip(LivingEquipmentChangeEvent event){
-    }
-    public String ModifyTooltipString(String string, int count){
+    public void OnEquip(LivingEquipmentChangeEvent event){}
+    public void OnUnequip(LivingEquipmentChangeEvent event){}
+    public void OnTick(EntityTickEvent entityTickEvent, ItemStack itemStack){}
+    public String ModifyTooltipString(String string, int count, ItemStack itemStack){
         return string;
     }
-    public int ModifyAirRegeneration(int count) {return 0;}
+    public int ModifyAirRegeneration(int count, ItemStack itemStack) {return 0;}
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltipComponents, @NotNull TooltipFlag tooltipFlag) {
         String descriptionId = stack.getDescriptionId() + ".tooltip.item";
@@ -31,8 +31,8 @@ public class BacktankUpgradeItem extends Item {
             descriptionId = stack.getDescriptionId() + ".tooltip";
             component = Component.translatable(descriptionId);
         }
-        literalText = ModifyTooltipString(component.getString(), 1);
-        int airRegeneration = ModifyAirRegeneration(1);
+        literalText = ModifyTooltipString(component.getString(), 1, stack);
+        int airRegeneration = ModifyAirRegeneration(1, stack);
         if (airRegeneration != 0 && !stack.getItem().equals(CreateBacktanksExpanded.AIR_REGENERATION_UPGRADE.get())){
             String descriptionId2 = "item.create_backtanks_expanded.pressurized_air_regeneration_upgrade.tooltip";
             Component component2 = Component.translatable(descriptionId2);

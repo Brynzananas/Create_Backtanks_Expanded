@@ -6,6 +6,7 @@
   "mixins": [
     "BacktankBlockMixin",
     "BacktankBlockEntityMixin",
+    "BacktankBlockEntityMixin2",
     "EntityMixin",
     "LivingEntityMixin",
     "ElytraMixin",

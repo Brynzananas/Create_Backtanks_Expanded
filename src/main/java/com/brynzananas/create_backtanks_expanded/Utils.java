@@ -1,5 +1,7 @@
 package com.brynzananas.create_backtanks_expanded;
 
+import com.simibubi.create.content.equipment.armor.BacktankItem;
+import com.simibubi.create.content.equipment.armor.BacktankUtil;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.BoundingBox3d;
 import dev.ryanhcode.sable.companion.math.Pose3d;
@@ -40,7 +42,7 @@ public class Utils {
         return GetUpgradeCount(livingEntity, backtankUpgradeItem) > 0;
     }
     public static int GetUpgradeCount(LivingEntity livingEntity, BacktankUpgradeItem backtankUpgradeItem){
-        ItemStack itemStack = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
+        ItemStack itemStack = GetBacktank(livingEntity);
         if (itemStack == ItemStack.EMPTY) return 0;
         NonNullList<ItemStack> itemStacks = GetUpgrades(itemStack);
         if (itemStacks == null) return 0;
@@ -149,5 +151,10 @@ public class Utils {
         if (speedAttribute != null && speedAttribute.hasModifier(resourceLocation)) {
             speedAttribute.removeModifier(resourceLocation);
         }
+    }
+    public static ItemStack GetBacktank(LivingEntity livingEntity){
+        ItemStack itemStack = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
+        if (itemStack.getItem() instanceof BacktankItem) return itemStack;
+        return ItemStack.EMPTY;
     }
 }
