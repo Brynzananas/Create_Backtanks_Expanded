@@ -1,8 +1,10 @@
 package com.brynzananas.create_backtanks_expanded;
 
 import com.simibubi.create.content.equipment.armor.BacktankBlockEntity;
+import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.content.fluids.pipes.IAxisPipe;
 import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
+import com.simibubi.create.content.redstone.contact.RedstoneContactBlock;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
@@ -14,6 +16,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RedstoneLampBlock;
+import net.minecraft.world.level.block.TargetBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -42,9 +46,12 @@ public class BacktankUpgradeStationBlock extends Block implements IAxisPipe {
             this.checkAndFlip(state, serverlevel, pos);
         }
     }
+    @Override
+    public boolean isSignalSource(BlockState state) {
+        return true;
+    }
     public void checkAndFlip(BlockState state, ServerLevel level, BlockPos pos) {
         boolean flag = level.hasNeighborSignal(pos);
-
         if (flag != state.getValue(POWERED)) {
             BlockState blockstate = state;
             if (!(Boolean)state.getValue(POWERED)) {

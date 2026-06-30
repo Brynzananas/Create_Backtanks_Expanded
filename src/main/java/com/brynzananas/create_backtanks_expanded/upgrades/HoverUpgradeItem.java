@@ -20,50 +20,70 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class HoverUpgradeItem extends BacktankUpgradeItem {
-    public static final ResourceLocation HOVER = ResourceLocation.fromNamespaceAndPath(CreateBacktanksExpanded.MODID, "backtank_hover");
-    public HoverUpgradeItem(Properties properties) {
+    public int hoverValue;
+    public int air_regeneration_value;
+    public int max_value;
+    public int max_air_regeneration_value;
+    public ResourceLocation resourceId;
+    public HoverUpgradeItem(Properties properties, ResourceLocation resourceId, int hoverValue, int air_regeneration_value, int max_value, int max_air_regeneration_value) {
         super(properties);
+        this.resourceId = resourceId;
+        this.hoverValue = hoverValue;
+        this.air_regeneration_value = air_regeneration_value;
+        this.max_air_regeneration_value = max_air_regeneration_value;
     }
     @Override
-    public void OnEquip(LivingEquipmentChangeEvent event){
+    public void OnEquip(LivingEquipmentChangeEvent event, ItemStack itemStack){
         LivingEntity livingEntity = event.getEntity();
         int count = Utils.GetUpgradeCount(livingEntity, CreateBacktanksExpanded.HOVER_UPGRADE.get());
         if (count == 0) return;
-        Utils.AddAirRegenerationAttribute(livingEntity, HOVER, Config.HOVER_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count);
+        int value2 = air_regeneration_value * count;
+        if (max_air_regeneration_value != 0){
+            value2 = Math.min(value2, max_air_regeneration_value);
+        }
+        Utils.AddAirRegenerationAttribute(livingEntity, resourceId, value2);
         AttributeInstance crouchingAttribute = livingEntity.getAttribute(Attributes.SNEAKING_SPEED);
-        if (crouchingAttribute != null && !crouchingAttribute.hasModifier(HOVER)){
+        if (crouchingAttribute != null && !crouchingAttribute.hasModifier(resourceId)){
             double value = crouchingAttribute.getValue();
             AttributeModifier modifier = new AttributeModifier(
-                    HOVER,
+                    resourceId,
                     1f - value,
                     AttributeModifier.Operation.ADD_VALUE
             );
             crouchingAttribute.addTransientModifier(modifier);
         }
         AttributeInstance speedAttribute = livingEntity.getAttribute(CreateBacktanksExpanded.HOVER_REACH);
-        if (speedAttribute == null || speedAttribute.hasModifier(HOVER)) return;
+        if (speedAttribute == null || speedAttribute.hasModifier(resourceId)) return;
+        int value = hoverValue * count;
+        if (max_value != 0){
+            value = Math.min(value, max_value);
+        }
         AttributeModifier modifier = new AttributeModifier(
-                HOVER,
-                Math.min(Config.HOVER_UPGRADE_HOVER_REACH_RADIUS.get() * count, Config.HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS.get()) ,
+                resourceId,
+                value,
                 AttributeModifier.Operation.ADD_VALUE
         );
         speedAttribute.addTransientModifier(modifier);
     }
     @Override
-    public void OnUnequip(LivingEquipmentChangeEvent event){
+    public void OnUnequip(LivingEquipmentChangeEvent event, ItemStack itemStack){
         LivingEntity livingEntity = event.getEntity();
-        Utils.RemoveAirRegenerationAttribute(livingEntity, HOVER);
+        Utils.RemoveAirRegenerationAttribute(livingEntity, resourceId);
         AttributeInstance crouchingAttribute = livingEntity.getAttribute(Attributes.SNEAKING_SPEED);
-        if (crouchingAttribute != null && crouchingAttribute.hasModifier(HOVER)){
-            crouchingAttribute.removeModifier(HOVER);
+        if (crouchingAttribute != null && crouchingAttribute.hasModifier(resourceId)){
+            crouchingAttribute.removeModifier(resourceId);
         }
         AttributeInstance speedAttribute = livingEntity.getAttribute(CreateBacktanksExpanded.HOVER_REACH);
-        if (speedAttribute != null && speedAttribute.hasModifier(HOVER)) {
-            speedAttribute.removeModifier(HOVER);
+        if (speedAttribute != null && speedAttribute.hasModifier(resourceId)) {
+            speedAttribute.removeModifier(resourceId);
         }
     }
     @Override
     public String ModifyTooltipString(String string, int count, ItemStack itemStack){
-        return string.replaceAll("#value#", String.valueOf((Math.min(Config.HOVER_UPGRADE_HOVER_REACH_RADIUS.get() * count, Config.HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS.get())))).replaceAll("#max_value#", String.valueOf(Config.HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS.get()));
+        int value = hoverValue * count;
+        if (max_value != 0){
+            value = Math.min(value, max_value);
+        }
+        return string.replaceAll("#value#", String.valueOf(value)).replaceAll("#max_value#", String.valueOf(max_value));
     }
 }

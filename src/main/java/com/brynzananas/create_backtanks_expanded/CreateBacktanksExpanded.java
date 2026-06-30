@@ -56,6 +56,7 @@ import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.SimpleFluidContent;
@@ -79,9 +80,27 @@ public class CreateBacktanksExpanded {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredItem<BacktankUpgradeItem> GENERIC_UPGRADE = ITEMS.registerItem("generic_upgrade", BacktankUpgradeItem::new);
-    public static final DeferredItem<SpeedUpgradeItem> SPEED_UPGRADE = ITEMS.registerItem("speed_upgrade", SpeedUpgradeItem::new);
-    public static final DeferredItem<HoverUpgradeItem> HOVER_UPGRADE = ITEMS.registerItem("hover_upgrade", HoverUpgradeItem::new);
-    public static final DeferredItem<PressurizedAirRegenerationUpgradeItem> AIR_REGENERATION_UPGRADE = ITEMS.registerItem("pressurized_air_regeneration_upgrade", PressurizedAirRegenerationUpgradeItem::new);
+    private static final ResourceLocation SPEED_RESOURCE_ID = ResourceLocation.fromNamespaceAndPath(CreateBacktanksExpanded.MODID, "backtank_move_speed");
+    public static final DeferredItem<SpeedUpgradeItem> SPEED_UPGRADE = ITEMS.registerItem("speed_upgrade", new Function<Item.Properties, SpeedUpgradeItem>() {
+        @Override
+        public SpeedUpgradeItem apply(Item.Properties properties) {
+            return new SpeedUpgradeItem(properties, SPEED_RESOURCE_ID, 0, 0, 0, 0);
+        }
+    });
+    public static final ResourceLocation HOVER_RESOURCE_ID = ResourceLocation.fromNamespaceAndPath(CreateBacktanksExpanded.MODID, "backtank_hover");
+    public static final DeferredItem<HoverUpgradeItem> HOVER_UPGRADE = ITEMS.registerItem("hover_upgrade", new Function<Item.Properties, HoverUpgradeItem>() {
+        @Override
+        public HoverUpgradeItem apply(Item.Properties properties) {
+            return new HoverUpgradeItem(properties, HOVER_RESOURCE_ID,0, 0, 0, 0);
+        }
+    });
+    private static final ResourceLocation PRESSURIZED_AIR_REGEN_RESOURCE_ID = ResourceLocation.fromNamespaceAndPath(CreateBacktanksExpanded.MODID, "backtank_pressurized_air_regen");
+    public static final DeferredItem<PressurizedAirRegenerationUpgradeItem> AIR_REGENERATION_UPGRADE = ITEMS.registerItem("pressurized_air_regeneration_upgrade", new Function<Item.Properties, PressurizedAirRegenerationUpgradeItem>() {
+        @Override
+        public PressurizedAirRegenerationUpgradeItem apply(Item.Properties properties) {
+            return new PressurizedAirRegenerationUpgradeItem(properties, PRESSURIZED_AIR_REGEN_RESOURCE_ID, 0, 0);
+        }
+    });
     public static final DeferredItem<BacktankUpgradeItem> ELYTRA_UPGRADE = ITEMS.registerItem("elytra_upgrade", BacktankUpgradeItem::new);
     public static final int FLUID_TANK_UPGRADE_CAPACITY = 1000;
     public static final DeferredItem<FluidTankUpgradeItem> FLUID_TANK_UPGRADE = ITEMS.registerItem("fluid_tank_upgrade", new Function<Item.Properties, FluidTankUpgradeItem>() {
@@ -194,6 +213,7 @@ public class CreateBacktanksExpanded {
     public static boolean isSableInstalled;
 
     public CreateBacktanksExpanded(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         ATTACHMENT_TYPES.register(modEventBus);
@@ -205,13 +225,27 @@ public class CreateBacktanksExpanded {
 
         NeoForge.EVENT_BUS.addListener(this::onBlockPlaced);
         NeoForge.EVENT_BUS.addListener(this::onEquipmentChange);
-//        NeoForge.EVENT_BUS.addListener(this::onItemTooltip);
         NeoForge.EVENT_BUS.addListener(this::onEntityTick);
+        NeoForge.EVENT_BUS.addListener(this::onServerLoad);
 //        NeoForge.EVENT_BUS.addListener(this::onCanEffectBeAdded);
 
         modEventBus.addListener(this::registerCapabilities);
 
-        modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+
+    }
+
+    private void onServerLoad(ServerAboutToStartEvent event){
+        SPEED_UPGRADE.get().speedValue = Config.SPEED_UPGRADE_SPEED_MULTIPLIER.get();
+        SPEED_UPGRADE.get().max_value = Config.SPEED_UPGRADE_MAX_SPEED_MULTIPLIER.get();
+        SPEED_UPGRADE.get().air_regeneration_value = Config.SPEED_UPGRADE_PRESSURIZED_AIR_REGENERATION.get();
+        SPEED_UPGRADE.get().max_air_regeneration_value = Config.SPEED_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION.get();
+        HOVER_UPGRADE.get().hoverValue = Config.HOVER_UPGRADE_HOVER_REACH_RADIUS.get();
+        HOVER_UPGRADE.get().max_value = Config.HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS.get();
+        HOVER_UPGRADE.get().air_regeneration_value = Config.HOVER_UPGRADE_PRESSURIZED_AIR_REGENERATION.get();
+        HOVER_UPGRADE.get().max_air_regeneration_value = Config.HOVER_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION.get();
+        AIR_REGENERATION_UPGRADE.get().air_regeneration_value = Config.PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION.get();
+        AIR_REGENERATION_UPGRADE.get().max_air_regeneration_value = Config.PRESSURIZED_AIR_REGENERATION_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION.get();
+        FLUID_TANK_UPGRADE.get().capacity = Config.FLUID_TANK_UPGRADE_MAX_CAPACITY.get();
     }
 
     private void onCanEffectBeAdded(MobEffectEvent.Applicable event){
@@ -345,14 +379,14 @@ public class CreateBacktanksExpanded {
         if (itemStacks != null){
             for (ItemStack itemStack : itemStacks){
                 if (itemStack.isEmpty() || !(itemStack.getItem() instanceof BacktankUpgradeItem backtankUpgradeItem)) continue;
-                backtankUpgradeItem.OnUnequip(event);
+                backtankUpgradeItem.OnUnequip(event, itemStack);
             }
         }
         NonNullList<ItemStack> itemStacks2 = Utils.GetUpgrades(event.getTo());
         if (itemStacks != null){
             for (ItemStack itemStack : itemStacks2){
                 if (itemStack.isEmpty() || !(itemStack.getItem() instanceof BacktankUpgradeItem backtankUpgradeItem)) continue;
-                backtankUpgradeItem.OnEquip(event);
+                backtankUpgradeItem.OnEquip(event, itemStack);
             }
         }
 

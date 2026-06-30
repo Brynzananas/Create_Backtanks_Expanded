@@ -4,57 +4,73 @@ import com.brynzananas.create_backtanks_expanded.BacktankUpgradeItem;
 import com.brynzananas.create_backtanks_expanded.Config;
 import com.brynzananas.create_backtanks_expanded.CreateBacktanksExpanded;
 import com.brynzananas.create_backtanks_expanded.Utils;
-import com.simibubi.create.foundation.item.ItemDescription;
-import com.simibubi.create.foundation.item.TooltipModifier;
-import net.createmod.catnip.lang.FontHelper;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class SpeedUpgradeItem extends BacktankUpgradeItem {
-    private static final ResourceLocation SPEED_BOOST_ID = ResourceLocation.fromNamespaceAndPath(CreateBacktanksExpanded.MODID, "backtank_move_speed");
-    public SpeedUpgradeItem(Properties properties) {
+    public double speedValue;
+    public int air_regeneration_value;
+    public double max_value;
+    public int max_air_regeneration_value;
+    public ResourceLocation resourceId;
+    public SpeedUpgradeItem(Properties properties, ResourceLocation resourceId, double speedValue, int air_regeneration_value, double max_value, int max_air_regeneration_value) {
         super(properties);
+        this.resourceId = resourceId;
+        this.speedValue = speedValue;
+        this.air_regeneration_value = air_regeneration_value;
+        this.max_value = max_value;
+        this.max_air_regeneration_value = max_air_regeneration_value;
     }
     @Override
-    public void OnEquip(LivingEquipmentChangeEvent event){
+    public void OnEquip(LivingEquipmentChangeEvent event, ItemStack itemStack){
         LivingEntity livingEntity = event.getEntity();
-        int count = Utils.GetUpgradeCount(livingEntity, CreateBacktanksExpanded.SPEED_UPGRADE.get());
-        Utils.AddAirRegenerationAttribute(livingEntity, SPEED_BOOST_ID, Config.SPEED_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count);
         AttributeInstance speedAttribute = livingEntity.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speedAttribute == null || speedAttribute.hasModifier(SPEED_BOOST_ID)) return;
+        if (speedAttribute == null || speedAttribute.hasModifier(resourceId)) return;
+        int count = Utils.GetUpgradeCount(livingEntity, (BacktankUpgradeItem) itemStack.getItem());
+        int value2 = air_regeneration_value * count;
+        if (max_air_regeneration_value != 0){
+            value2 = Math.min(value2, max_air_regeneration_value);
+        }
+        Utils.AddAirRegenerationAttribute(livingEntity, resourceId, value2);
+        double value = speedValue * (double)count;
+        if (max_value != 0){
+            value = Math.min(value, max_value);
+        }
         AttributeModifier modifier = new AttributeModifier(
-                SPEED_BOOST_ID,
-                Config.SPEED_UPGRADE_SPEED_MULTIPLIER.get() * count,
+                resourceId,
+                value,
                 AttributeModifier.Operation.ADD_MULTIPLIED_BASE
         );
         speedAttribute.addTransientModifier(modifier);
     }
     @Override
-    public void OnUnequip(LivingEquipmentChangeEvent event){
+    public void OnUnequip(LivingEquipmentChangeEvent event, ItemStack itemStack){
         LivingEntity livingEntity = event.getEntity();
-        Utils.RemoveAirRegenerationAttribute(livingEntity, SPEED_BOOST_ID);
+        Utils.RemoveAirRegenerationAttribute(livingEntity, resourceId);
         AttributeInstance speedAttribute = livingEntity.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speedAttribute != null && speedAttribute.hasModifier(SPEED_BOOST_ID)) {
-            speedAttribute.removeModifier(SPEED_BOOST_ID);
+        if (speedAttribute != null && speedAttribute.hasModifier(resourceId)) {
+            speedAttribute.removeModifier(resourceId);
         }
     }
     @Override
     public String ModifyTooltipString(String string, int count, ItemStack itemStack){
-        return string.replaceAll("#value#", String.valueOf(((int)(Config.SPEED_UPGRADE_SPEED_MULTIPLIER.get() * count * 100f))));
+        double value = speedValue * (double)count;
+        if (max_value != 0){
+            value = Math.min(value, max_value);
+        }
+        return string.replaceAll("#value#", String.valueOf(((int)(value * 100d)))).replaceAll("#max_value#", String.valueOf((int)(max_value * 100d)));
     }
     @Override
     public int ModifyAirRegeneration(int count, ItemStack itemStack){
-        return Config.SPEED_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count;
+        int value2 = air_regeneration_value * count;
+        if (max_air_regeneration_value != 0){
+            value2 = Math.min(value2, max_air_regeneration_value);
+        }
+        return value2;
     }
 }

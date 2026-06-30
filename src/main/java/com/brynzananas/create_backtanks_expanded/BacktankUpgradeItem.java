@@ -15,8 +15,8 @@ public class BacktankUpgradeItem extends Item {
     public BacktankUpgradeItem(Properties properties) {
         super(properties);
     }
-    public void OnEquip(LivingEquipmentChangeEvent event){}
-    public void OnUnequip(LivingEquipmentChangeEvent event){}
+    public void OnEquip(LivingEquipmentChangeEvent event, ItemStack itemStack){}
+    public void OnUnequip(LivingEquipmentChangeEvent event, ItemStack itemStack){}
     public void OnTick(EntityTickEvent entityTickEvent, ItemStack itemStack){}
     public String ModifyTooltipString(String string, int count, ItemStack itemStack){
         return string;

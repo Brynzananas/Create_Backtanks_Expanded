@@ -16,26 +16,39 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PressurizedAirRegenerationUpgradeItem extends BacktankUpgradeItem {
-    public PressurizedAirRegenerationUpgradeItem(Properties properties) {
+    public int air_regeneration_value;
+    public int max_air_regeneration_value;
+    public ResourceLocation resourceId;
+    public PressurizedAirRegenerationUpgradeItem(Properties properties, ResourceLocation resourceId, int air_regeneration_value, int max_air_regeneration_value) {
         super(properties);
-    }
-    private static final ResourceLocation PRESSURIZED_AIR_REGEN = ResourceLocation.fromNamespaceAndPath(CreateBacktanksExpanded.MODID, "backtank_pressurized_air_regen");
-    @Override
-    public void OnEquip(LivingEquipmentChangeEvent event){
-        LivingEntity livingEntity = event.getEntity();
-        int count = Utils.GetUpgradeCount(livingEntity, CreateBacktanksExpanded.AIR_REGENERATION_UPGRADE.get());
-        Utils.AddAirRegenerationAttribute(livingEntity, PRESSURIZED_AIR_REGEN, Config.PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count);
+        this.resourceId = resourceId;
+        this.air_regeneration_value = air_regeneration_value;
+        this.max_air_regeneration_value = max_air_regeneration_value;
     }
     @Override
-    public void OnUnequip(LivingEquipmentChangeEvent event){
+    public void OnEquip(LivingEquipmentChangeEvent event, ItemStack itemStack){
         LivingEntity livingEntity = event.getEntity();
-        Utils.RemoveAirRegenerationAttribute(livingEntity, PRESSURIZED_AIR_REGEN);
+        int count = Utils.GetUpgradeCount(livingEntity, (BacktankUpgradeItem) itemStack.getItem());
+        int value2 = air_regeneration_value * count;
+        if (max_air_regeneration_value != 0){
+            value2 = Math.min(value2, max_air_regeneration_value);
+        }
+        Utils.AddAirRegenerationAttribute(livingEntity, resourceId, value2);
+    }
+    @Override
+    public void OnUnequip(LivingEquipmentChangeEvent event, ItemStack itemStack){
+        LivingEntity livingEntity = event.getEntity();
+        Utils.RemoveAirRegenerationAttribute(livingEntity, resourceId);
     }
     @Override
     public String ModifyTooltipString(String string, int count, ItemStack itemStack){
-        return string.replaceAll("#value#", "+" + (Config.PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count));
+        int value2 = air_regeneration_value * count;
+        if (max_air_regeneration_value != 0){
+            value2 = Math.min(value2, max_air_regeneration_value);
+        }
+        return string.replaceAll("#value#", "+" + (value2)).replaceAll("#max_value", String.valueOf(max_air_regeneration_value));
     }
     public int ModifyAirRegeneration(int count, ItemStack itemStack){
-        return Config.PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION.get() * count;
+        return max_air_regeneration_value * count;
     }
 }

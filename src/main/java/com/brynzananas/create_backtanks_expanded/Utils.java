@@ -137,6 +137,7 @@ public class Utils {
         return solidBlocks;
     }
     public static void AddAirRegenerationAttribute(LivingEntity livingEntity, ResourceLocation resourceLocation, double value){
+        if (value == 0) return;
         AttributeInstance airAttribute = livingEntity.getAttribute(CreateBacktanksExpanded.BACKTANK_PRESSURIZED_AIR_REGENERATION);
         if (airAttribute == null || airAttribute.hasModifier(resourceLocation)) return;
         AttributeModifier modifier = new AttributeModifier(

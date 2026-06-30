@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FluidTankUpgradeItem extends BacktankUpgradeItem {
-    public final int capacity;
+    public int capacity;
 
     public FluidTankUpgradeItem(Properties properties, int capacity) {
         super(properties.stacksTo(1));

@@ -1,10 +1,12 @@
 package com.brynzananas.create_backtanks_expanded;
 
+import com.brynzananas.create_backtanks_expanded.ponder.CreateBacktanksExpandedPonderPlugin;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
 import com.simibubi.create.foundation.item.TooltipModifier;
 import com.simibubi.create.foundation.utility.Debug;
 import net.createmod.catnip.lang.FontHelper;
+import net.createmod.ponder.foundation.PonderIndex;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.NonNullList;
@@ -13,6 +15,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -20,9 +23,12 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 
 import java.util.*;
 
@@ -42,9 +48,20 @@ public class CreateBacktanksExpandedClient {
         AddItemTooltips();
     }
     private static void AddItemTooltips(){
-        Item item = CreateBacktanksExpanded.BACKTANK_UPGRADE_STATION_ITEM.get();
-        com.simibubi.create.foundation.item.TooltipModifier tooltipModifier = new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE).andThen(TooltipModifier.mapNull(KineticStats.create(item)));
-        TooltipModifier.REGISTRY.register(item, tooltipModifier);
+//        Item item = CreateBacktanksExpanded.BACKTANK_UPGRADE_STATION_ITEM.get();
+//        com.simibubi.create.foundation.item.TooltipModifier tooltipModifier = new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE).andThen(TooltipModifier.mapNull(KineticStats.create(item)));
+//        TooltipModifier.REGISTRY.register(item, tooltipModifier);
+        PonderIndex.addPlugin(new CreateBacktanksExpandedPonderPlugin());
+    }
+    static class TooltipFluidInfo{
+        public TooltipFluidInfo(int totalAmount, int totalCapacity, String fluidName){
+            this.totalCapacity = totalCapacity;
+            this.totalAmount = totalAmount;
+            this.fluidName = fluidName;
+        }
+        public int totalCapacity;
+        public int totalAmount;
+        public String fluidName;
     }
     @SubscribeEvent
     private static void onItemTooltip(ItemTooltipEvent event) { // TODO: This is so shit
@@ -55,19 +72,30 @@ public class CreateBacktanksExpandedClient {
         int targetIndex = Utils.FindInsertionIndex(tooltip);
         Map<Item, Integer> itemCounts = new HashMap<>();
         List<ItemStack> items = new ArrayList<>();
-        List<Item> items2 = new ArrayList<>();
-        List<ItemStack> fluidTanks = new ArrayList<>();
+        List<Fluid> fluidTanks = new ArrayList<>();
+        Map<Fluid, TooltipFluidInfo> fluidTanks2 = new HashMap<>();
         for (ItemStack itemStack : itemStacks){
             Item item = itemStack.getItem();
-            if (item.equals(CreateBacktanksExpanded.FLUID_TANK_UPGRADE.get())){
-                fluidTanks.add(itemStack);
+            IFluidHandlerItem capability = itemStack.getCapability(Capabilities.FluidHandler.ITEM);
+            if (capability != null){
+                FluidStack fluidStack = capability.getFluidInTank(1);
+                if (fluidStack.isEmpty()) continue;
+                Fluid fluid = fluidStack.getFluid();
+                if (fluidTanks2.containsKey(fluid)){
+                    TooltipFluidInfo tooltipFluidInfo = fluidTanks2.get(fluid);
+                    tooltipFluidInfo.totalAmount += fluidStack.getAmount();
+                    tooltipFluidInfo.totalCapacity += capability.getTankCapacity(1);
+                    fluidTanks2.replace(fluid, tooltipFluidInfo);
+                }else{
+                    fluidTanks2.put(fluid, new TooltipFluidInfo(capability.getTankCapacity(1), fluidStack.getAmount(), fluidStack.isEmpty() ? I18n.get("item.create_backtanks_expanded.fluid_tank_upgrade.tooltip.empty") : fluidStack.getHoverName().getString()));
+                    fluidTanks.add(fluid);
+                }
             }else{
                 if (itemCounts.containsKey(item)){
                     itemCounts.replace(item, itemCounts.get(item) + itemStack.getCount());
                 }else{
                     itemCounts.put(item, itemStack.getCount());
                     items.add(itemStack);
-                    items2.add(item);
                 }
             }
         }
@@ -90,19 +118,17 @@ public class CreateBacktanksExpandedClient {
                 tooltip.add(Component.literal(text).withStyle(ChatFormatting.BLUE));
             }
         }
-        for (ItemStack itemStack : fluidTanks){
-            Item item = itemStack.getItem();
-            if (!(item instanceof BacktankUpgradeItem backtankUpgradeItem)) continue;
-            airRegeneration += backtankUpgradeItem.ModifyAirRegeneration(1, itemStack);
-            String descriptionId = item.getDescriptionId() + ".tooltip";
-            Component component = Component.translatable(descriptionId);
-            String literalText = component.getString();
-            if (literalText.equals(descriptionId)) continue;
-            String text = backtankUpgradeItem.ModifyTooltipString(literalText, 1, itemStack);
+        for (int i = 0; i < fluidTanks2.size(); i++){
+            Fluid fluid = fluidTanks.get(i);
+            TooltipFluidInfo tooltipFluidInfo = fluidTanks2.get(fluid);
+            int amount = tooltipFluidInfo.totalAmount;
+            String fluidName = tooltipFluidInfo.fluidName;
+            int capacity = tooltipFluidInfo.totalCapacity;
+            String theString = I18n.get("item.create_backtanks_expanded.fluid_tank_upgrade.tooltip").replaceAll("#fluid_name#", fluidName).replaceAll("#value#", String.valueOf(amount)).replaceAll("#max_value#", String.valueOf(capacity));
             if (targetIndex >= 0 && targetIndex <= tooltip.size()){
-                tooltip.add(targetIndex, Component.literal(text).withStyle(ChatFormatting.BLUE));
+                tooltip.add(targetIndex, Component.literal(theString).withStyle(ChatFormatting.BLUE));
             }else{
-                tooltip.add(Component.literal(text).withStyle(ChatFormatting.BLUE));
+                tooltip.add(Component.literal(theString).withStyle(ChatFormatting.BLUE));
             }
         }
         if (airRegeneration != 0){

@@ -8,12 +8,16 @@ public class Config {
 
     public static final ModConfigSpec.DoubleValue SPEED_UPGRADE_SPEED_MULTIPLIER;
     public static final ModConfigSpec.IntValue SPEED_UPGRADE_PRESSURIZED_AIR_REGENERATION;
+    public static final ModConfigSpec.DoubleValue SPEED_UPGRADE_MAX_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.IntValue SPEED_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION;
 
     public static final ModConfigSpec.IntValue HOVER_UPGRADE_HOVER_REACH_RADIUS;
     public static final ModConfigSpec.IntValue HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS;
     public static final ModConfigSpec.IntValue HOVER_UPGRADE_PRESSURIZED_AIR_REGENERATION;
+    public static final ModConfigSpec.IntValue HOVER_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION;
 
     public static final ModConfigSpec.IntValue PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION;
+    public static final ModConfigSpec.IntValue PRESSURIZED_AIR_REGENERATION_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION;
 
     public static final ModConfigSpec.IntValue FLUID_TANK_UPGRADE_MAX_CAPACITY;
 
@@ -28,9 +32,16 @@ public class Config {
                 .comment("Speed Multiplier")
                 .defineInRange("speed_upgrade_speed_multiplier", 0.05, -Double.MAX_VALUE, Double.MAX_VALUE);
 
+        SPEED_UPGRADE_MAX_SPEED_MULTIPLIER = BUILDER
+                .comment("Maximum Speed Multiplier. 0 = no limit")
+                .defineInRange("speed_upgrade_max_speed_multiplier", 3.2, -Double.MAX_VALUE, Double.MAX_VALUE);
+
         SPEED_UPGRADE_PRESSURIZED_AIR_REGENERATION = BUILDER
                 .comment("Pressurized Air Regeneration per Second")
                 .defineInRange("speed_upgrade_pressurized_air_regeneration", 0, -Integer.MAX_VALUE, Integer.MAX_VALUE);
+        SPEED_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION = BUILDER
+                .comment("Maximum Pressurized Air Regeneration per Second. 0 = no limit")
+                .defineInRange("speed_upgrade_max_pressurized_air_regeneration", 0, -Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         BUILDER.pop();
 
@@ -41,12 +52,16 @@ public class Config {
                 .defineInRange("hover_upgrade_hover_reach", 3, 0, Integer.MAX_VALUE);
 
         HOVER_UPGRADE_MAX_HOVER_REACH_RADIUS = BUILDER
-                .comment("Max Hover Reach Radius. Expect heavy lag with high hover reach values")
+                .comment("Maximum Hover Reach Radius. 0 = no limit. Expect heavy lag with high hover reach values")
                 .defineInRange("hover_upgrade_max_hover_reach", 12, 0, Integer.MAX_VALUE);
 
         HOVER_UPGRADE_PRESSURIZED_AIR_REGENERATION = BUILDER
                 .comment("Pressurized Air Regeneration per Second")
                 .defineInRange("hover_upgrade_pressurized_air_regeneration", 0, -Integer.MAX_VALUE, Integer.MAX_VALUE);
+
+        HOVER_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION = BUILDER
+                .comment("Pressurized Air Regeneration per Second")
+                .defineInRange("hover_upgrade_max_pressurized_air_regeneration", 0, -Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         BUILDER.pop();
 
@@ -55,6 +70,10 @@ public class Config {
         PRESSURIZED_AIR_REGENERATION_UPGRADE_PRESSURIZED_AIR_REGENERATION = BUILDER
                 .comment("Pressurized Air Regeneration per Second")
                 .defineInRange("pressurized_air_regeneration_upgrade_pressurized_air_regeneration", 2, -Integer.MAX_VALUE, Integer.MAX_VALUE);
+
+        PRESSURIZED_AIR_REGENERATION_UPGRADE_MAX_PRESSURIZED_AIR_REGENERATION = BUILDER
+                .comment("Maximum Pressurized Air Regeneration per Second. 0 = no limit")
+                .defineInRange("pressurized_air_regeneration_upgrade_max_pressurized_air_regeneration", 128, -Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         BUILDER.pop();
 
